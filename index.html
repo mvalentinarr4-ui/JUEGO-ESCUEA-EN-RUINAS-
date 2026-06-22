@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Escape de la Escuela</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  color: white;
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+}
+
+#overlay {
+  background: rgba(0,0,0,0.6);
+  height: 100vh;
+  padding: 20px;
+}
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="overlay">
+
+<h1>🏫 ESCAPE DE LA ESCUELA 🧟</h1>
+
+<div id="game"></div>
+
+</div>
+
+<audio id="music" loop></audio>
+
+<script>
+
+let vida = 100;
+let inventario = [];
+
+function setBg(url){
+  document.body.style.backgroundImage = "url('" + url + "')";
+}
+
+function playSound(url){
+  let s = new Audio(url);
+  s.play();
+}
+
+function update(){
+  document.getElementById("game").innerHTML = `
+  <h2>❤️ Vida: ${vida}</h2>
+  <h3>🎒 Inventario: ${inventario.join(", ") || "Vacío"}</h3>
+  `;
+}
+
+function start(){
+  vida = 100;
+  inventario = [];
+
+  setBg("https://source.unsplash.com/1600x900/?school,abandoned");
+  document.getElementById("game").innerHTML = `
+    <h2>Ingresa tu nombre</h2>
+    <input id="name">
+    <button onclick="intro()">Entrar</button>
+  `;
+}
+
+function intro(){
+  playSound("https://actions.google.com/sounds/v1/horror/ambient_horror.ogg");
+  aula();
+}
+
+function aula(){
+  update();
+  setBg("https://source.unsplash.com/1600x900/?classroom,dark");
+
+  document.getElementById("game").innerHTML += `
+    <h2>Estás en un aula destruida</h2>
+
+    <button onclick="pasillo()">Salir al pasillo</button>
+    <button onclick="buscar()">Buscar</button>
+  `;
+}
+
+function buscar(){
+  if(!inventario.includes("Linterna")){
+    inventario.push("Linterna");
+  }
+  playSound("https://actions.google.com/sounds/v1/household/light_switch.ogg");
+  pasillo();
+}
+
+function pasillo(){
+  update();
+  setBg("https://source.unsplash.com/1600x900/?hallway,dark");
+
+  let zombie = Math.random() < 0.7;
+
+  if(zombie){
+    document.getElementById("game").innerHTML = `
+      <h2>🧟 Zombi aparece</h2>
+
+      <button onclick="correr()">Correr</button>
+      <button onclick="pelear()">Pelear</button>
+    `;
+  } else {
+    piso2();
+  }
+}
+
+function correr(){
+  vida -= 10;
+  piso2();
+}
+
+function pelear(){
+  let win = Math.random() < (inventario.includes("Linterna") ? 0.75 : 0.5);
+
+  if(win){
+    piso2();
+  } else {
+    vida -= 40;
+    checkDeath();
+    piso2();
+  }
+}
+
+function piso2(){
+  update();
+  setBg("https://source.unsplash.com/1600x900/?stairs,school");
+
+  document.getElementById("game").innerHTML += `
+    <h2>Segundo piso</h2>
+
+    <button onclick="lab()">Laboratorio</button>
+    <button onclick="lib()">Biblioteca</button>
+    <button onclick="botiquin()">Botiquín</button>
+    <button onclick="final()">Terraza</button>
+  `;
+}
+
+function lab(){
+  if(Math.random() < 0.6){
+    if(!inventario.includes("Llave")){
+      inventario.push("Llave");
+    }
+  } else {
+    vida -= 20;
+  }
+
+  checkDeath();
+  piso2();
+}
+
+function lib(){
+  alert("La llave abre la salida final 🚪");
+  piso2();
+}
+
+function botiquin(){
+  if(!inventario.includes("Botiquín")){
+    inventario.push("Botiquín");
+  }
+
+  vida = Math.min(100, vida + 35);
+  piso2();
+}
+
+function final(){
+  update();
+  setBg("https://source.unsplash.com/1600x900/?roof,night");
+
+  if(inventario.includes("Llave") && vida > 60){
+    win("🏆 FINAL BUENO: Rescatado en helicóptero 🚁");
+  }
+  else if(inventario.includes("Llave")){
+    win("🏆 FINAL NORMAL: Escapaste solo");
+  }
+  else {
+    gameover();
+  }
+}
+
+function win(txt){
+  document.getElementById("game").innerHTML = `
+    <h1>${txt}</h1>
+    <button onclick="start()">Jugar otra vez</button>
+  `;
+}
+
+function gameover(){
+  document.getElementById("game").innerHTML = `
+    <h1>💀 GAME OVER</h1>
+    <button onclick="start()">Reintentar</button>
+  `;
+}
+
+function checkDeath(){
+  if(vida <= 0){
+    gameover();
+  }
+}
+
+start();
+
+</script>
+
+</body>
+</html>
