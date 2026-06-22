@@ -2,30 +2,29 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Escape de la Escuela</title>
+<title>Escape de la Escuela - Leyenda Final</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  color: white;
-  text-align: center;
-  background-size: cover;
-  background-position: center;
+body{
+  margin:0;
+  font-family:Arial;
+  color:white;
+  background-size:cover;
+  background-position:center;
 }
 
-#overlay {
-  background: rgba(0,0,0,0.6);
-  height: 100vh;
-  padding: 20px;
+#overlay{
+  background:rgba(0,0,0,0.78);
+  height:100vh;
+  padding:20px;
 }
 
-button {
-  padding: 10px;
-  margin: 5px;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
+button{
+  padding:10px;
+  margin:5px;
+  font-size:16px;
+  cursor:pointer;
+  border:none;
 }
 </style>
 </head>
@@ -33,182 +32,258 @@ button {
 <body>
 
 <div id="overlay">
-
-<h1>🏫 ESCAPE DE LA ESCUELA 🧟</h1>
-
+<h1>🏫 ESCAPE DE LA ESCUELA EN RUINAS 🧟</h1>
 <div id="game"></div>
-
 </div>
-
-<audio id="music" loop></audio>
 
 <script>
 
 let vida = 100;
+let energia = 100;
 let inventario = [];
+let nombre = "";
 
-function setBg(url){
-  document.body.style.backgroundImage = "url('" + url + "')";
+function bg(url){
+  document.body.style.backgroundImage = `url('${url}')`;
 }
 
-function playSound(url){
-  let s = new Audio(url);
-  s.play();
+function render(html){
+  document.getElementById("game").innerHTML = html;
 }
 
-function update(){
-  document.getElementById("game").innerHTML = `
-  <h2>❤️ Vida: ${vida}</h2>
-  <h3>🎒 Inventario: ${inventario.join(", ") || "Vacío"}</h3>
+function estado(){
+  return `
+  <p>❤️ Vida: ${vida}</p>
+  <p>⚡ Energía: ${energia}</p>
+  <p>🎒 Inventario: ${inventario.join(", ") || "Vacío"}</p>
   `;
+}
+
+function check(){
+  if(vida <= 0 || energia <= 0){
+    gameover();
+  }
 }
 
 function start(){
   vida = 100;
+  energia = 100;
   inventario = [];
 
-  setBg("https://source.unsplash.com/1600x900/?school,abandoned");
-  document.getElementById("game").innerHTML = `
+  bg("https://source.unsplash.com/1600x900/?abandoned,school");
+
+  render(`
     <h2>Ingresa tu nombre</h2>
     <input id="name">
-    <button onclick="intro()">Entrar</button>
-  `;
+    <button onclick="intro()">Comenzar</button>
+  `);
 }
 
 function intro(){
-  playSound("https://actions.google.com/sounds/v1/horror/ambient_horror.ogg");
-  aula();
+  nombre = document.getElementById("name").value || "Jugador";
+
+  render(`
+    <h2>Bienvenido ${nombre}</h2>
+    <p>La escuela ha colapsado... algo se mueve dentro...</p>
+    <button onclick="aula()">Entrar a la escuela</button>
+  `);
 }
 
 function aula(){
-  update();
-  setBg("https://source.unsplash.com/1600x900/?classroom,dark");
+  energia -= 5;
+  check();
 
-  document.getElementById("game").innerHTML += `
-    <h2>Estás en un aula destruida</h2>
+  bg("https://source.unsplash.com/1600x900/?dark,classroom");
 
+  render(`
+    ${estado()}
+    <h2>Te despiertas en un aula destruida</h2>
+
+    <p>Escuchas golpes en el techo...</p>
+
+    <button onclick="buscar()">Buscar objetos</button>
     <button onclick="pasillo()">Salir al pasillo</button>
-    <button onclick="buscar()">Buscar</button>
-  `;
+  `);
 }
 
 function buscar(){
   if(!inventario.includes("Linterna")){
     inventario.push("Linterna");
+    alert("🔦 Linterna encontrada");
+  } else {
+    alert("No hay nada útil");
   }
-  playSound("https://actions.google.com/sounds/v1/household/light_switch.ogg");
+
+  energia -= 5;
+  check();
   pasillo();
 }
 
 function pasillo(){
-  update();
-  setBg("https://source.unsplash.com/1600x900/?hallway,dark");
+  energia -= 5;
+  check();
 
-  let zombie = Math.random() < 0.7;
+  bg("https://source.unsplash.com/1600x900/?dark,hallway");
 
-  if(zombie){
-    document.getElementById("game").innerHTML = `
-      <h2>🧟 Zombi aparece</h2>
+  let evento = Math.random();
 
-      <button onclick="correr()">Correr</button>
-      <button onclick="pelear()">Pelear</button>
-    `;
+  if(evento < 0.75){
+    render(`
+      ${estado()}
+      <h2>🧟 Zombi detectado</h2>
+
+      <p>Se acerca rápidamente...</p>
+
+      <button onclick="atacar()">Atacar</button>
+      <button onclick="huir()">Huir</button>
+      <button onclick="esconder()">Esconderte</button>
+    `);
   } else {
+    render(`
+      ${estado()}
+      <h2>El pasillo está vacío...</h2>
+      <button onclick="piso2()">Subir</button>
+    `);
+  }
+}
+
+function atacar(){
+  let prob = Math.random();
+
+  if(inventario.includes("Linterna")) prob += 0.25;
+
+  energia -= 10;
+
+  if(prob > 0.55){
+    alert("💀 Zombi eliminado");
+    piso2();
+  } else {
+    vida -= 35;
+    alert("🧟 Te mordieron");
+    check();
     piso2();
   }
 }
 
-function correr(){
+function huir(){
+  energia -= 15;
   vida -= 10;
+  check();
   piso2();
 }
 
-function pelear(){
-  let win = Math.random() < (inventario.includes("Linterna") ? 0.75 : 0.5);
+function esconder(){
+  energia -= 10;
 
-  if(win){
+  if(Math.random() < 0.5){
+    alert("Pasó el peligro...");
     piso2();
   } else {
-    vida -= 40;
-    checkDeath();
+    vida -= 25;
+    alert("🧟 Te encontraron");
+    check();
     piso2();
   }
 }
 
 function piso2(){
-  update();
-  setBg("https://source.unsplash.com/1600x900/?stairs,school");
+  energia -= 5;
+  check();
 
-  document.getElementById("game").innerHTML += `
+  bg("https://source.unsplash.com/1600x900/?stairs,abandoned");
+
+  render(`
+    ${estado()}
     <h2>Segundo piso</h2>
 
-    <button onclick="lab()">Laboratorio</button>
-    <button onclick="lib()">Biblioteca</button>
-    <button onclick="botiquin()">Botiquín</button>
-    <button onclick="final()">Terraza</button>
-  `;
+    <p>El aire es más pesado...</p>
+
+    <button onclick="lab()">Laboratorio 🧪</button>
+    <button onclick="lib()">Biblioteca 📚</button>
+    <button onclick="botiquin()">Botiquín 🩹</button>
+    <button onclick="radio()">Buscar radio 📻</button>
+    <button onclick="terraza()">Ir a terraza 🚪</button>
+  `);
 }
 
 function lab(){
+  energia -= 10;
+
   if(Math.random() < 0.6){
     if(!inventario.includes("Llave")){
       inventario.push("Llave");
+      alert("🔑 Llave encontrada");
+    } else {
+      alert("Vacío");
     }
   } else {
     vida -= 20;
+    alert("💨 Gas tóxico");
   }
 
-  checkDeath();
+  check();
   piso2();
 }
 
 function lib(){
-  alert("La llave abre la salida final 🚪");
+  alert("📖 'Sin llave no hay escape...'");
   piso2();
 }
 
 function botiquin(){
-  if(!inventario.includes("Botiquín")){
-    inventario.push("Botiquín");
-  }
-
-  vida = Math.min(100, vida + 35);
+  vida = Math.min(100, vida + 40);
+  energia -= 5;
+  alert("❤️ Curado");
   piso2();
 }
 
-function final(){
-  update();
-  setBg("https://source.unsplash.com/1600x900/?roof,night");
+function radio(){
+  if(!inventario.includes("📻 Radio")){
+    inventario.push("📻 Radio");
+    alert("📻 Puedes pedir rescate ahora");
+  } else {
+    alert("Ya tienes radio");
+  }
 
-  if(inventario.includes("Llave") && vida > 60){
-    win("🏆 FINAL BUENO: Rescatado en helicóptero 🚁");
+  piso2();
+}
+
+function terraza(){
+  bg("https://source.unsplash.com/1600x900/?roof,night");
+
+  energia -= 10;
+  check();
+
+  if(inventario.includes("Llave") && inventario.includes("📻 Radio") && vida > 60){
+    win("🚁 FINAL VERDADERO: Helicóptero llega por ti");
   }
-  else if(inventario.includes("Llave")){
-    win("🏆 FINAL NORMAL: Escapaste solo");
+
+  else if(inventario.includes("Llave") && vida > 40){
+    win("🏃 FINAL ESCAPE: Logras sobrevivir solo");
   }
+
+  else if(inventario.includes("📻 Radio")){
+    win("📡 FINAL RESCATE: Te encuentran pero llegas herido");
+  }
+
   else {
     gameover();
   }
 }
 
 function win(txt){
-  document.getElementById("game").innerHTML = `
-    <h1>${txt}</h1>
+  render(`
+    <h1>🏆 ${txt}</h1>
     <button onclick="start()">Jugar otra vez</button>
-  `;
+  `);
 }
 
 function gameover(){
-  document.getElementById("game").innerHTML = `
+  render(`
     <h1>💀 GAME OVER</h1>
+    <p>La escuela te ha atrapado...</p>
     <button onclick="start()">Reintentar</button>
-  `;
-}
-
-function checkDeath(){
-  if(vida <= 0){
-    gameover();
-  }
+  `);
 }
 
 start();
